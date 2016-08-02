@@ -1,3 +1,5 @@
+package wumpus;
+
 public class TileModel
 {
    private boolean breeze, stench, pit, wumpus;

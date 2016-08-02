@@ -1,3 +1,5 @@
+package wumpus;
+
 public class Model
 {
    private TileModel[][] board = new TileModel[4][4];

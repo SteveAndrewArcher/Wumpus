@@ -1,10 +1,12 @@
+package wumpus;
+
 import java.util.*;
-public class PropositionalStatement
+public class PropStatement
 {
    private String sentence;
    private Stack<Boolean> stack = new Stack<Boolean>();    
    
-   public PropositionalStatement(String sentence)
+   public PropStatement(String sentence)
    {
       this.sentence = sentence;   
    }
@@ -14,11 +16,18 @@ public class PropositionalStatement
       return this.sentence;
    }
    
-   public void add(PropositionalStatement query)
+   public void add(PropStatement query)
    {
-      this.sentence += query.getSentence();
+      this.sentence = this.sentence + query.getSentence() + "&";
    }
    
+   public boolean entails(PropStatement query)
+   {
+      //method from the book/slides 
+      return true;  
+   }
+
+   //same as True? method from book/slides
    public boolean evaluate(Model m)
    {
       

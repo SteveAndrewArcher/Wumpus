@@ -17,8 +17,11 @@ public class Tile {
 	
 	public boolean OK = false;// Safe tile
 	public boolean V = false; // Visitied
-	public boolean D = false; // Possible danger. The tile might have a wumpus or a pit.
-	
+	public boolean DP = false; // Possible danger. The tile might have a pit.
+   public boolean DW = false; // Possible danger. The tile might have a wumpus.
+   public boolean KP = false; // the agent has determined there's a pit in this tile.
+   public boolean KW = false; // the agent has determined there's a wumpus in this tile.
+   
 	public Tile(int i, int j){
 		this.x = i;
 		this.y = j;
