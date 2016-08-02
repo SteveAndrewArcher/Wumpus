@@ -23,8 +23,59 @@ public class PropStatement
    
    public boolean entails(PropStatement query)
    {
-      //method from the book/slides 
-      return true;  
+      TreeSet<String> symbols = new TreeSet();
+      for(int i=0; i<this.sentence.length(); i++)
+      {  
+         if(sentence.charAt(i) == 'b' || sentence.charAt(i) == 'p' || sentence.charAt(i) == 'w' || sentence.charAt(i) == 's')
+         {
+            symbols.add(sentence.substring(i, i+3));
+            i+=2;
+         }
+      }
+      for(int i=0; i<query.getSentence().length(); i++)
+      {  
+         if(query.getSentence().charAt(i) == 'b' || query.getSentence().charAt(i) == 'p' || sentence.charAt(i) == 'w' || sentence.charAt(i) == 's')
+         {
+            symbols.add(sentence.substring(i, i+3));
+            i+=2;
+         }
+      } 
+      Model m = new Model();
+      return checkAll(query, symbols, m);  
+   }
+   
+   public boolean checkAll(PropStatement query, TreeSet<String> symbols, Model m)
+   {
+      if(symbols.size()==0)
+      {
+         if(this.evaluate(m))
+         {
+            return query.evaluate(m);
+         }
+         else
+         {
+            return true;
+         }
+      }
+      else
+      {
+         String nextSymbol = symbols.first();
+         TreeSet<String> rest = new TreeSet();
+         while(symbols.size()!=0)
+         {  
+            String next = symbols.first();
+            rest.add(next);
+            symbols.remove(next);
+         }
+         Model trueModel = m.clone();
+         Model falseModel = m.clone();
+         char feature = nextSymbol.charAt(0);
+         int row = Character.getNumericValue(nextSymbol.charAt(1));
+         int col = Character.getNumericValue(nextSymbol.charAt(2));
+         trueModel.set(feature, row, col, true);
+         falseModel.set(feature, row, col, false);
+         return(checkAll(query, rest, trueModel) && checkAll(query, rest, falseModel));
+      }
    }
 
    //same as True? method from book/slides

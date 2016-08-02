@@ -155,6 +155,7 @@ public class WumpusBoard {
          {
             testTile.OK = true;
             safeMoves++;
+            KB.add(new PropStatement("p"+testLoc+"-&w"+testLoc+"-&"));
          }
          if(nopit==false && pit==false) //There may be a pit in the adjacent tile
             testTile.DP = true;

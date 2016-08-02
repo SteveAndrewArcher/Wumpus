@@ -36,4 +36,15 @@ public class TileModel
       }
       return false;
    }
+   
+   @Override
+   public TileModel clone()
+   {
+      TileModel copy = new TileModel();
+      copy.set('b', this.get('b'));
+      copy.set('p', this.get('p'));
+      copy.set('w', this.get('w'));
+      copy.set('s', this.get('s'));
+      return copy;  
+   }
 }
