@@ -41,12 +41,13 @@ public class PropStatement
          }
       } 
       Model m = new Model();
-      return checkAll(query, symbols, m);  
+      String[] symbolsArray = symbols.toArray(new String[symbols.size()]);
+      return checkAll(query, symbolsArray, m);  
    }
    
-   public boolean checkAll(PropStatement query, TreeSet<String> symbols, Model m)
+   public boolean checkAll(PropStatement query, String[] symbols, Model m)
    {
-      if(symbols.size()==0)
+      if(symbols.length==0)
       {
          if(this.evaluate(m))
          {
@@ -59,13 +60,15 @@ public class PropStatement
       }
       else
       {
-         String nextSymbol = symbols.first();
-         TreeSet<String> rest = new TreeSet();
-         while(symbols.size()!=0)
-         {  
-            String next = symbols.first();
-            rest.add(next);
-            symbols.remove(next);
+         String nextSymbol = symbols[0];
+         String[] rest;
+         if(symbols.length > 1)
+         {
+            rest = Arrays.copyOfRange(symbols, 1, symbols.length);
+         }
+         else
+         {
+            rest = new String[0];
          }
          Model trueModel = m.clone();
          Model falseModel = m.clone();
@@ -82,7 +85,8 @@ public class PropStatement
    public boolean evaluate(Model m)
    {
       
-      char term, col, row;
+      char term;
+      int col, row;
       boolean value, value2;
       for(int i = 0; i < sentence.length(); i++)
       {
@@ -90,9 +94,9 @@ public class PropStatement
          if(term == 'b' || term == 'p' || term == 's' || term == 'w')
          {
             i++;
-            col = sentence.charAt(i);
+            col = Character.getNumericValue(sentence.charAt(i));
             i++;
-            row = sentence.charAt(i);
+            row = Character.getNumericValue(sentence.charAt(i));
             value = m.get(term, row, col);
             stack.push(value);
          }
