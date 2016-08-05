@@ -11,7 +11,7 @@ public class WumpusBoard {
    public boolean maybeFoundWumpus;
    public int safeMoves=0;
 
-   public KnowledgeBase KB = new KnowledgeBase();
+   public static KnowledgeBase KB = new KnowledgeBase();
 	
 	public static void InitializeBoard(){
 		board = new Tile[4][4];
@@ -102,8 +102,19 @@ public class WumpusBoard {
       initializeKB();
 	}
    
-   public void initializeKB();
+   public static void initializeKB()
    {
+      //generate the rules of Wumpus World as definite clauses
+      /* Symbols: b = Breeze
+                  s = Stench
+                  p = Pit
+                  w = Wumpus
+                  t = sTill air, (the absence of breeze)
+                  a = a pleasant Aroma, (the absence of stench)
+                  f = solid Floor, (the absence of a pit)
+                  c = Crickets, (the absence of a wumpus)
+      */
+      
       // S & S > Wxy
       for(int row=0; row<4; row++)
       {
@@ -116,29 +127,19 @@ public class WumpusBoard {
             {
                for(int b=a+1; b<conTile.Adjacents.size(); b++)
                {
-                  //if two stenches in a line, wumpus must be in between
-                  if(conTile.Adjacents.get(a).x==conTile.Adjacents.get(b).x || conTile.Adjacents.get(a).y==conTile.Adjacents.get(b).y)
+                  Tile stench1 = conTile.Adjacents.get(a);
+                  Tile stench2 = conTile.Adjacents.get(b);
+                  c.addPremise("s"+ makeSymbol(stench1.x, stench1.y));
+                  c.addPremise("s"+ makeSymbol(stench2.x, stench2.y));
+                  for(int i=0; i<stench1.Adjacents.size(); i++)
                   {
-                     c.addPremise("s"+ makeSymbol(conTile.Adjacents.get(a).x, conTile.Adjacents.get(a).y));
-                     c.addPremise("s"+ makeSymbol(conTile.Adjacents.get(b).x, conTile.Adjacents.get(b).y));
-                  }
-                  //if two stenches diagonal, wumpus must be in the corner that isn't crickets (non wumpus)
-                  else 
-                  {
-                     c.addPremise("s"+ makeSymbol(conTile.Adjacents.get(a).x, conTile.Adjacents.get(a).y));
-                     c.addPremise("s"+ makeSymbol(conTile.Adjacents.get(b).x, conTile.Adjacents.get(b).y));
-                     for(int i = 0; i<conTile.Adjacents.get(a).size(); i++)
+                     for(int j=0; j<stench2.Adjacents.size(); j++)
                      {
-                        for(int j = 0: j<conTile.Adjacents.get(a).size(); i++)
-                        {
-                           if(conTile.Adjacents.get(a).get(i) == conTile.Adjacents.get(b).get(j) && conTile.Adjacents.get(a).get(i) != conTile)
-                           {
-                              c.addPremise("c"+makeSymbol(conTile.Adjacents.get(a).get(i).x, conTile.Adjacents.get(a).get(i).y);
-                           }
-                        }
+                        if(stench1.Adjacents.get(i) == stench2.Adjacents.get(j) && stench1.Adjacents.get(i) != conTile)
+                           c.addPremise("c"+makeSymbol(stench1.Adjacents.get(i).x, stench1.Adjacents.get(i).y));
                      }
-                  }
-               }
+                  } 
+               }               
             }
             KB.addRule(c);
          }
@@ -173,13 +174,55 @@ public class WumpusBoard {
             }
          }
       }
-      //Bxy & F & 
+      //Bxy & F & F... > P in last adjacent
+      for(int row=0; row<4; row++)
+      {
+         for(int col=0; col<4; col++)
+         {
+            Tile premTile = board[row][col];
+            for(int a=0; a<premTile.Adjacents.size(); a++)
+            {
+               Clause c = new Clause();
+               c.addPremise("b"+makeSymbol(premTile.x,premTile.y));
+               c.setConclusion("p" + makeSymbol(premTile.Adjacents.get(a).x, premTile.Adjacents.get(a).y));
+               for(int b=0; b<premTile.Adjacents.size(); b++)
+               {
+                  if(b!=a)
+                     c.addPremise("f"+makeSymbol(premTile.Adjacents.get(b).x,premTile.Adjacents.get(b).y));
+                     
+               } 
+               KB.addRule(c); 
+            }
+         }
+      }
+      //Sxy & a & a... > w in last adjacent
+      for(int row=0; row<4; row++)
+      {
+         for(int col=0; col<4; col++)
+         {
+            Tile premTile = board[row][col];
+            for(int a=0; a<premTile.Adjacents.size(); a++)
+            {
+               Clause c = new Clause();
+               c.addPremise("s"+makeSymbol(premTile.x,premTile.y));
+               c.setConclusion("w" + makeSymbol(premTile.Adjacents.get(a).x, premTile.Adjacents.get(a).y));
+               for(int b=0; b<premTile.Adjacents.size(); b++)
+               {
+                  if(b!=a)
+                     c.addPremise("a"+makeSymbol(premTile.Adjacents.get(b).x,premTile.Adjacents.get(b).y));
+                     
+               } 
+               KB.addRule(c); 
+            }
+         }
+      }
+
 
       
       
    }
    
-   public makeSymbol(int x, int y)
+   public static String makeSymbol(int x, int y)
    {
       return(Integer.toString(x)+Integer.toString(y));  
    }
@@ -197,7 +240,16 @@ public class WumpusBoard {
    public void AgentTurn()
    {
       Tile agentLoc = findAgent();
-      
+      if(agentLoc.B)
+         KB.addKnown("b"+makeSymbol(agentLoc.x,agentLoc.y));
+      else
+         KB.addKnown("t"+makeSymbol(agentLoc.x,agentLoc.y));
+      if(agentLoc.S)
+         KB.addKnown("s"+makeSymbol(agentLoc.x,agentLoc.y));
+      else
+         KB.addKnown("a"+makeSymbol(agentLoc.x,agentLoc.y));
+      KB.addKnown("f"+makeSymbol(agentLoc.x,agentLoc.y));
+      KB.addKnown("c"+makeSymbol(agentLoc.x,agentLoc.y));
       //************** Evalulate Adjecent Tiles based on Knowledge Base ***********************
       for(int i=0; i<agentLoc.Adjacents.size(); i++)
       {
@@ -207,38 +259,37 @@ public class WumpusBoard {
          Boolean nopit = null;
          Boolean wumpus = null;
          Boolean nowumpus = null;
-         PropStatement pitquery = new PropStatement("p"+testLoc);
-         PropStatement nopitquery = new PropStatement("p"+testLoc+"-");
-         PropStatement wumpusquery = new PropStatement("w"+testLoc);
-         PropStatement nowumpusquery = new PropStatement("w"+testLoc+"-");
+         String pitquery = "p"+testLoc;
+         String nopitquery = "f"+testLoc;
+         String wumpusquery = "w"+testLoc;
+         String nowumpusquery = "c"+testLoc;
          
          if(KB.entails(pitquery)) //there IS a pit in the adjacent Tile
          {
             pit = true;
             testTile.KP = true;
-            KB.add(pitquery);
+            KB.addKnown(pitquery);
          }     
          if(KB.entails(nopitquery))
          {
             nopit = true;
-            KB.add(nopitquery);
+            KB.addKnown(nopitquery);
          }
          if(KB.entails(wumpusquery) && !deadWumpus) //there IS a wumpus in the adjacent tile
          {
             wumpus = true;
             testTile.KW = true;
-            KB.add(wumpusquery);
+            KB.addKnown(wumpusquery);
          }
          if(KB.entails(nowumpusquery) || deadWumpus)
          {
             nowumpus = true;
-            KB.add(nowumpusquery);
+            KB.addKnown(nowumpusquery);
          }   
          if(nopit==true && nowumpus==true) //The adjecent tile has neither a pit or a wumpus
          {
             testTile.OK = true;
             safeMoves++;
-            KB.add(new PropStatement("p"+testLoc+"-&w"+testLoc+"-&"));
          }
          if(nopit==false && pit==false) //There may be a pit in the adjacent tile
             testTile.DP = true;
@@ -332,7 +383,6 @@ public class WumpusBoard {
       {
          AgentDied();
       }
-
    }
    
    	

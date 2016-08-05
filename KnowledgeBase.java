@@ -45,6 +45,7 @@ public class KnowledgeBase
                   if(count[i] == 0)
                   {
                      agenda.add(rules.get(i).getConclusion());
+                     knownTrue.add(rules.get(i).getConclusion());
                   }
                }
             }
