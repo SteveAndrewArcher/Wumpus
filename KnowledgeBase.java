@@ -32,7 +32,7 @@ public class KnowledgeBase
       while(agenda.size()>0)
       {
          String p = agenda.remove(0);
-         if(p == query)
+         if(p.equals(query))
             return true;
          if(!inferred.contains(p))
          {

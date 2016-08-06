@@ -1,6 +1,6 @@
 package wumpus;
 
-import java.util.Random;
+import java.util.*;
 
 public class WumpusBoard {
 	public static Tile[][] board;
@@ -9,7 +9,7 @@ public class WumpusBoard {
 	public boolean deadWumpus = false;
    public boolean foundWumpus = false;
    public boolean maybeFoundWumpus;
-   public int safeMoves=0;
+   public HashSet<Tile> safeMoves = new HashSet<Tile>();
 
    public static KnowledgeBase KB = new KnowledgeBase();
 	
@@ -239,7 +239,24 @@ public class WumpusBoard {
    
    public void AgentTurn()
    {
+      PrintBoard();
       Tile agentLoc = findAgent();
+      
+      if(agentLoc.G)
+      {
+         win();
+         return;
+      }
+      if(agentLoc.P)
+      {
+         AgentDied();
+         return;
+      }
+      if(agentLoc.W)
+      {
+         AgentDied();
+         return;
+      }
       if(agentLoc.B)
          KB.addKnown("b"+makeSymbol(agentLoc.x,agentLoc.y));
       else
@@ -255,10 +272,10 @@ public class WumpusBoard {
       {
          Tile testTile = agentLoc.Adjacents.get(i);
          String testLoc = Integer.toString(testTile.x) + Integer.toString(testTile.y);
-         Boolean pit = null;
-         Boolean nopit = null;
-         Boolean wumpus = null;
-         Boolean nowumpus = null;
+         boolean pit = false;
+         boolean nopit = false;
+         boolean wumpus = false;
+         boolean nowumpus = false;
          String pitquery = "p"+testLoc;
          String nopitquery = "f"+testLoc;
          String wumpusquery = "w"+testLoc;
@@ -286,10 +303,10 @@ public class WumpusBoard {
             nowumpus = true;
             KB.addKnown(nowumpusquery);
          }   
-         if(nopit==true && nowumpus==true) //The adjecent tile has neither a pit or a wumpus
+         if(nopit==true && nowumpus==true) //The adjacent tile has neither a pit or a wumpus
          {
             testTile.OK = true;
-            safeMoves++;
+            safeMoves.add(testTile);
          }
          if(nopit==false && pit==false) //There may be a pit in the adjacent tile
             testTile.DP = true;
@@ -303,25 +320,36 @@ public class WumpusBoard {
       
       
       //*************** Find the best tile to move to ******************************************
-      
+      ArrayList<Tile> options = new ArrayList<Tile>();
+      Tile moveTile;
       for(int i=0; i<agentLoc.Adjacents.size(); i++) //if tile is safe and unvisited, move there
       {
          Tile testTile = agentLoc.Adjacents.get(i);
          if(testTile.OK && !testTile.V)
          {
-            safeMoves--;
-            MoveAgent(testTile.x, testTile.y);
-            return;
-         }     
+            options.add(testTile);
+         }
+      }
+      if(options.size()>0)
+      {  
+         moveTile = options.get((int)Math.floor(Math.random()*options.size()));
+         MoveAgent(moveTile.x, moveTile.y);
+         safeMoves.remove(moveTile);
+         return;   
       }
       for(int i=0; i<agentLoc.Adjacents.size(); i++) //otherwise, if there's another safe move out there, move back to a visited tile
       {
          Tile testTile = agentLoc.Adjacents.get(i);
-         if(testTile.OK && testTile.V && safeMoves > 0)
+         if(testTile.OK && testTile.V && safeMoves.size()>0)
          {
-            MoveAgent(testTile.x, testTile.y);
-            return;
-         }     
+            options.add(testTile); 
+         }    
+      }
+      if(options.size()>0)
+      {
+         moveTile = options.get((int)Math.floor(Math.random()*options.size()));
+         MoveAgent(moveTile.x, moveTile.y);
+         return;
       }
       if(foundWumpus && arrow==1)
       {
@@ -355,10 +383,15 @@ public class WumpusBoard {
             Tile testTile = agentLoc.Adjacents.get(i);
             if(testTile.OK)
             {
-               MoveAgent(testTile.x, testTile.y);
-               return;
+               options.add(testTile);   
             }     
          }
+         if(options.size()>0)
+         {
+            moveTile = options.get((int)Math.floor(Math.random()*options.size()));
+            MoveAgent(moveTile.x, moveTile.y);
+            return;
+         }  
       }
       for(int i=0; i<agentLoc.Adjacents.size(); i++)
       {
@@ -369,20 +402,7 @@ public class WumpusBoard {
             return;
          }
       }
-      PrintBoard();
-      agentLoc = findAgent();
-      if(agentLoc.G)
-      {
-         win();
-      }
-      if(agentLoc.P)
-      {
-         AgentDied();
-      }
-      if(agentLoc.W)
-      {
-         AgentDied();
-      }
+    
    }
    
    	
@@ -436,7 +456,7 @@ public class WumpusBoard {
       for(int i=0; i<nextTile.Adjacents.size(); i++)
       {
          Tile testTile = nextTile.Adjacents.get(i);
-         if((firstTile.x == testTile.x && nextTile.x == testTile.x) || (firstTile.y == testTile.y && nextTile.y == testTile.y))
+         if(((firstTile.x == testTile.x && nextTile.x == testTile.x) || (firstTile.y == testTile.y && nextTile.y == testTile.y)) && testTile != firstTile)
          {
             return shotAtWumpus(nextTile, testTile);
          }
@@ -451,9 +471,9 @@ public class WumpusBoard {
       for(int i=0; i<nextTile.Adjacents.size(); i++)
       {
          Tile testTile = nextTile.Adjacents.get(i);
-         if((firstTile.x == testTile.x && nextTile.x == testTile.x) || (firstTile.y == testTile.y && nextTile.y == testTile.y))
+         if(((firstTile.x == testTile.x && nextTile.x == testTile.x) || (firstTile.y == testTile.y && nextTile.y == testTile.y)) && testTile != firstTile)
          {
-            return shotAtWumpus(nextTile, testTile);
+            return maybeShotAtWumpus(nextTile, testTile);
          }
       }
       return false;

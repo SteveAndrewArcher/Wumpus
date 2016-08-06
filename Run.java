@@ -10,8 +10,8 @@ public class Run {
 		wb.PrintBoard();
       while(wb.points>-1000 && wb.points<=0)
       {
-         //System.out.print("press ENTER for the next turn.");
-         //sc.nextLine();
+         System.out.print("press ENTER for the next turn.");
+         sc.nextLine();
          wb.AgentTurn();
          
       }
@@ -30,4 +30,8 @@ public class Run {
       }
       
 	}
+   
+   
+   
+   
 }
