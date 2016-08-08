@@ -115,7 +115,7 @@ public class WumpusBoard {
                   c = Crickets, (the absence of a wumpus)
       */
       
-      // S & S > Wxy
+      // S & S -> Wxy
       for(int row=0; row<4; row++)
       {
          for(int col=0; col<4; col++)
@@ -144,7 +144,7 @@ public class WumpusBoard {
             KB.addRule(c);
          }
       }
-      //Axy > C in all adjacents
+      //Axy -> C in all adjacents
       for(int row=0; row<4; row++)
       {
          for(int col=0; col<4; col++)
@@ -159,7 +159,7 @@ public class WumpusBoard {
             }
          }
       }
-      //Txy > F in all adjacents
+      //Txy -> F in all adjacents
       for(int row=0; row<4; row++)
       {
          for(int col=0; col<4; col++)
@@ -174,7 +174,7 @@ public class WumpusBoard {
             }
          }
       }
-      //Bxy & F & F... > P in last adjacent
+      //Bxy & F & F... -> P in last adjacent
       for(int row=0; row<4; row++)
       {
          for(int col=0; col<4; col++)
@@ -195,7 +195,7 @@ public class WumpusBoard {
             }
          }
       }
-      //Sxy & a & a... > w in last adjacent
+      //Sxy & a & a... -> w in last adjacent
       for(int row=0; row<4; row++)
       {
          for(int col=0; col<4; col++)
@@ -216,6 +216,29 @@ public class WumpusBoard {
             }
          }
       }
+      //Wxy -> c in all other tiles
+      for(int row = 0; row<4; row++)
+      {
+         for(int col=0; col<4; col++)
+         {
+            for(int row2=0; row2<4; row2++)
+            {
+               for(int col2=0; col2<4; col2++)
+               {
+                  if(row!=row2 && col!=col2)
+                  {
+                     Clause c = new Clause();
+                     c.addPremise("w"+makeSymbol(row, col));
+                     c.setConclusion("c"+makeSymbol(row2,col));
+                     KB.addRule(c);
+                  }
+               } 
+           
+            }
+            
+         }
+      }
+      
 
 
       
@@ -252,7 +275,7 @@ public class WumpusBoard {
          AgentDied();
          return;
       }
-      if(agentLoc.W)
+      if(agentLoc.W && !deadWumpus)
       {
          AgentDied();
          return;
@@ -285,28 +308,28 @@ public class WumpusBoard {
          {
             pit = true;
             testTile.KP = true;
-            KB.addKnown(pitquery);
          }     
          if(KB.entails(nopitquery))
          {
             nopit = true;
-            KB.addKnown(nopitquery);
          }
          if(KB.entails(wumpusquery) && !deadWumpus) //there IS a wumpus in the adjacent tile
          {
             wumpus = true;
             testTile.KW = true;
-            KB.addKnown(wumpusquery);
+            foundWumpus = true;
          }
          if(KB.entails(nowumpusquery) || deadWumpus)
          {
             nowumpus = true;
-            KB.addKnown(nowumpusquery);
          }   
          if(nopit==true && nowumpus==true) //The adjacent tile has neither a pit or a wumpus
          {
             testTile.OK = true;
-            safeMoves.add(testTile);
+            if(!testTile.V)
+            {
+               safeMoves.add(testTile);
+            }
          }
          if(nopit==false && pit==false) //There may be a pit in the adjacent tile
             testTile.DP = true;
@@ -356,7 +379,7 @@ public class WumpusBoard {
          for(int i=0; i<agentLoc.Adjacents.size(); i++) //otherwise, take a shot at the wumpus if avaliable
          {
             Tile testTile = agentLoc.Adjacents.get(i);
-            if(shotAtWumpus(agentLoc, testTile))
+            if(shotAtWumpus(testTile))
             {
                ShootArrow(testTile.x, testTile.y);
                return;
@@ -369,7 +392,7 @@ public class WumpusBoard {
          for(int i=0; i<agentLoc.Adjacents.size(); i++) //otherwise, take a shot at the wumpus if possibly available
          {
             Tile testTile = agentLoc.Adjacents.get(i);
-            if(maybeShotAtWumpus(agentLoc, testTile))
+            if(maybeShotAtWumpus(testTile))
             {
                ShootArrow(testTile.x, testTile.y); 
                return;
@@ -393,14 +416,19 @@ public class WumpusBoard {
             return;
          }  
       }
-      for(int i=0; i<agentLoc.Adjacents.size(); i++)
+      for(int i=0; i<agentLoc.Adjacents.size(); i++)//as a last resort, move to a tile that might be safe
       {
          Tile testTile = agentLoc.Adjacents.get(i);
-         if(!testTile.KP && !testTile.KW && !testTile.V)//as a last resort, move to an unvisited but possibly dangerous tile and hope for the best
-         {
-            MoveAgent(testTile.x, testTile.y);
-            return;
+         if(!testTile.KW && !testTile.KP)
+         { 
+            options.add(testTile);
          }
+      }
+      if(options.size()>0)
+      {  
+         moveTile = options.get((int)Math.floor(Math.random()*options.size()));
+         MoveAgent(moveTile.x, moveTile.y);
+         return;   
       }
     
    }
@@ -427,13 +455,14 @@ public class WumpusBoard {
    }
 	
 	public void ShootArrow(int x, int y){
-		if(shotAtWumpus(findAgent(), board[x][y]))
-      {
-         System.out.println("You killed the wumpus!");
-         deadWumpus = true;
-      }
       arrow--;
-		points -= 10;	
+      if(board[x][y].W)
+      {  
+         deadWumpus = true;
+         System.out.println("The Wumpus has been slain by your mighty arrow!");
+         board[x][y].OK = true;
+      }   
+      points -= 10;	
 	}
    
    public Tile findAgent()
@@ -449,34 +478,16 @@ public class WumpusBoard {
       return null;
    }
    
-   public boolean shotAtWumpus(Tile firstTile, Tile nextTile)
+   //It seems to me that a point blank shot is the only shot necessary, since
+   //if you can't step to the Wumpus's tile, killing him is pointless
+   public boolean shotAtWumpus(Tile nextTile)
    {
-      if(nextTile.KW)
-         return true;
-      for(int i=0; i<nextTile.Adjacents.size(); i++)
-      {
-         Tile testTile = nextTile.Adjacents.get(i);
-         if(((firstTile.x == testTile.x && nextTile.x == testTile.x) || (firstTile.y == testTile.y && nextTile.y == testTile.y)) && testTile != firstTile)
-         {
-            return shotAtWumpus(nextTile, testTile);
-         }
-      }
-      return false;
+      return nextTile.KW;
    }
    
-   public boolean maybeShotAtWumpus(Tile firstTile, Tile nextTile)
+   public boolean maybeShotAtWumpus(Tile nextTile)
    {
-      if(nextTile.DW)
-         return true;
-      for(int i=0; i<nextTile.Adjacents.size(); i++)
-      {
-         Tile testTile = nextTile.Adjacents.get(i);
-         if(((firstTile.x == testTile.x && nextTile.x == testTile.x) || (firstTile.y == testTile.y && nextTile.y == testTile.y)) && testTile != firstTile)
-         {
-            return maybeShotAtWumpus(nextTile, testTile);
-         }
-      }
-      return false;
+      return nextTile.DW;
    }
    
 

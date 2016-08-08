@@ -3,7 +3,7 @@ import java.util.*;
 public class KnowledgeBase
 {
    private ArrayList<Clause> rules = new ArrayList<Clause>();
-   private ArrayList<String> knownTrue = new ArrayList<String>();   
+   private HashSet<String> knownTrue = new HashSet<String>();   
    
    
    public void addRule(Clause c)
@@ -24,10 +24,11 @@ public class KnowledgeBase
          count[i] = rules.get(i).numPremises();
       }
       ArrayList<String> inferred = new ArrayList<String>();
+      String[] agendaLoader = knownTrue.toArray(new String[knownTrue.size()]);
       ArrayList<String> agenda = new ArrayList<String>();
-      for(int i = 0; i < knownTrue.size(); i++)
+      for(int i = 0; i < agendaLoader.length; i++)
       {
-         agenda.add(knownTrue.get(i));
+         agenda.add(agendaLoader[i]);
       }
       while(agenda.size()>0)
       {
