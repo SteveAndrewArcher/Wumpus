@@ -2,7 +2,8 @@ package wumpus;
 
 import java.util.ArrayList;
 
-public class Tile {
+public class Tile
+{
 	public int x;
 	public int y;
 	
@@ -18,11 +19,12 @@ public class Tile {
 	public boolean OK = false;// Safe tile
 	public boolean V = false; // Visitied
 	public boolean DP = false; // Possible danger. The tile might have a pit.
-   public boolean DW = false; // Possible danger. The tile might have a wumpus.
-   public boolean KP = false; // the agent has determined there's a pit in this tile.
-   public boolean KW = false; // the agent has determined there's a wumpus in this tile.
-   
-	public Tile(int i, int j){
+	public boolean DW = false; // Possible danger. The tile might have a wumpus.
+	public boolean KP = false; // the agent has determined there's a pit in this tile.
+	public boolean KW = false; // the agent has determined there's a wumpus in this tile.
+
+	public Tile(int i, int j)
+	{
 		this.x = i;
 		this.y = j;
 		this.A = false;
@@ -35,7 +37,8 @@ public class Tile {
 		this.V = false;
 	}
 	
-	public void SpreadStench(){
+	public void SpreadStench()
+	{
 		System.out.println(Adjacents.size());
 		for(int i = 0; i < Adjacents.size(); i++){
 			Adjacents.get(i).S = true;
@@ -47,26 +50,33 @@ public class Tile {
 			Adjacents.get(i).B = true;
 		}
 	}
-	
+
 	@Override
-	public String toString(){
+	public String toString()
+	{
 		String t = "";
-		if(this.A){
+		if(this.A)
+		{
 			t += "A";
 		} 
-		if(this.B){
+		if(this.B)
+		{
 			t += "B";
 		}
-		if(this.G){
+		if(this.G)
+		{
 			t += "G";
 		}
-		if(this.P){
+		if(this.P)
+		{
 			t += "P";
 		}
-		if(this.S){
+		if(this.S)
+		{
 			t += "S";
 		}
-		if(this.V){
+		if(this.V)
+		{
 			t += "V";
 		}
 		if(this.W){
