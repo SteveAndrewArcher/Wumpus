@@ -17,7 +17,7 @@ public class Tile
 	public boolean W = false; // Wumpus
 	
 	public boolean OK = false;// Safe tile
-	public boolean V = false; // Visitied
+	public boolean V = false; // Visited
 	public boolean DP = false; // Possible danger. The tile might have a pit.
 	public boolean DW = false; // Possible danger. The tile might have a wumpus.
 	public boolean KP = false; // the agent has determined there's a pit in this tile.
